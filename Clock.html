@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern Analog Clock with Alarm</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #c9d6ff, #e2e2e2);
+      font-family: Arial, sans-serif;
+    }
+
+    .clock {
+      position: relative;
+      height: 320px;
+      width: 320px;
+      border: 10px solid #333;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3),
+                  inset 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Hands */
+    .hand {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: 50% 100%;
+      transform: translate(-50%, -100%) rotate(90deg);
+    }
+
+    .hand.hour {
+      width: 8px;
+      height: 80px;
+      background: #222;
+      border-radius: 6px;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+    }
+
+    .hand.minute {
+      width: 5px;
+      height: 110px;
+      background: #444;
+      border-radius: 6px;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .hand.second {
+      width: 2px;
+      height: 130px;
+      background: crimson;
+      box-shadow: 0 0 6px crimson;
+    }
+
+    /* Center dot */
+    .center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      background: #222;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      box-shadow: 0 0 5px rgba(0,0,0,0.6);
+    }
+
+    /* Numbers */
+    .number {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+    }
+
+    .number span {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-size: 22px;
+      font-weight: bold;
+      color: #222;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    /* Ticks */
+    .tick {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: center bottom;
+    }
+
+    .tick.small {
+      width: 2px;
+      height: 10px;
+      background: #888;
+    }
+
+    .tick.big {
+      width: 3px;
+      height: 18px;
+      background: #000;
+    }
+
+    /* Alarm controls */
+    .alarm-controls {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .alarm-controls input {
+      width: 50px;
+      padding: 5px;
+      margin: 5px;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .alarm-controls button {
+      margin: 5px;
+      padding: 8px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background: #444;
+      color: white;
+      transition: 0.2s;
+    }
+
+    .alarm-controls button:hover {
+      background: #222;
+    }
+
+    #alarmStatus {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 18px;
+      color: crimson;
+    }
+  </style>
+</head>
+<body>
+  <div class="clock">
+    <!-- Clock Hands -->
+    <div class="hand hour" id="hour"></div>
+    <div class="hand minute" id="minute"></div>
+    <div class="hand second" id="second"></div>
+    <div class="center"></div>
+
+    <!-- Numbers -->
+    <div class="number" id="numbers"></div>
+
+    <!-- Ticks -->
+    <div id="ticks"></div>
+  </div>
+
+  <!-- Alarm Controls -->
+  <div class="alarm-controls">
+    <label>Hour:
+      <input type="number" id="alarmHour" min="0" max="23" value="0">
+    </label>
+    <label>Minute:
+      <input type="number" id="alarmMinute" min="0" max="59" value="0">
+    </label>
+    <label>Second:
+      <input type="number" id="alarmSecond" min="0" max="59" value="0">
+    </label>
+    <br>
+    <button id="setAlarm">Set Alarm</button>
+    <button id="stopAlarm">Stop Alarm</button>
+    <p id="alarmStatus"></p>
+  </div>
+
+  <script>
+    const hourEl = document.getElementById("hour");
+    const minuteEl = document.getElementById("minute");
+    const secondEl = document.getElementById("second");
+    const numbersContainer = document.getElementById("numbers");
+    const ticksContainer = document.getElementById("ticks");
+
+    // Generate numbers
+    for(let i=1; i<=12; i++){
+      const angle = (i * 30) * Math.PI / 180;
+      const radius = 130;
+      const x = 160 + radius * Math.sin(angle);
+      const y = 160 - radius * Math.cos(angle);
+
+      const numEl = document.createElement("span");
+      numEl.innerText = i;
+      numEl.style.left = `${x}px`;
+      numEl.style.top = `${y}px`;
+      numbersContainer.appendChild(numEl);
+    }
+
+    // Generate ticks
+    for(let i=0; i<60; i++){
+      const tick = document.createElement("div");
+      tick.classList.add("tick");
+      tick.classList.add(i % 5 === 0 ? "big" : "small");
+      tick.style.transform = `translate(-50%, -100%) rotate(${i*6}deg)`;
+      tick.style.top = "50%";
+      tick.style.left = "50%";
+      ticksContainer.appendChild(tick);
+    }
+
+    // Update hands
+    function updateClock(){
+      const now = new Date();
+      const h = now.getHours() % 12;
+      const m = now.getMinutes();
+      const s = now.getSeconds();
+      const ms = now.getMilliseconds();
+
+      const hDeg = (h + m/60 + s/3600) * 30;
+      const mDeg = (m + s/60 + ms/60000) * 6;
+      const sDeg = (s + ms/1000) * 6;
+
+      hourEl.style.transform = `translate(-50%, -100%) rotate(${hDeg}deg)`;
+      minuteEl.style.transform = `translate(-50%, -100%) rotate(${mDeg}deg)`;
+      secondEl.style.transform = `translate(-50%, -100%) rotate(${sDeg}deg)`;
+    }
+
+    setInterval(updateClock, 50);
+    updateClock();
+
+    // Alarm feature
+    let alarmTime = null;
+    let alarmSound = new Audio("https://www.soundjay.com/button/beep-07.wav");
+
+    document.getElementById("setAlarm").addEventListener("click", () => {
+      const h = document.getElementById("alarmHour").value.padStart(2,"0");
+      const m = document.getElementById("alarmMinute").value.padStart(2,"0");
+      const s = document.getElementById("alarmSecond").value.padStart(2,"0");
+      alarmTime = `${h}:${m}:${s}`;
+      document.getElementById("alarmStatus").textContent = "⏰ Alarm set for " + alarmTime;
+    });
+
+    document.getElementById("stopAlarm").addEventListener("click", () => {
+      alarmTime = null;
+      alarmSound.pause();
+      alarmSound.currentTime = 0;
+      document.getElementById("alarmStatus").textContent = "Alarm stopped.";
+    });
+
+    function checkAlarm(){
+      const now = new Date();
+      const currentTime = 
+        String(now.getHours()).padStart(2,"0") + ":" +
+        String(now.getMinutes()).padStart(2,"0") + ":" +
+        String(now.getSeconds()).padStart(2,"0");
+
+      if(alarmTime === currentTime){
+        alarmSound.play();
+        document.getElementById("alarmStatus").textContent = "🚨 Alarm ringing!";
+      }
+    }
+
+    setInterval(checkAlarm, 1000);
+  </script>
+</body>
+</html>
